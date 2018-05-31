@@ -19,6 +19,8 @@ pip install docopt tqdm pyfancy sklearn scipy
 ```
  
 ### Usage
+A detailed tutorial introduction can be found at https://practicalcheminfomatics.blogspot.com/2018/05/free-wilson-analysis.html
+
 As a demo, go to the data directory and run the command below 
 ```commandline
 ../free_wilson.py all --scaffold scaffold.mol --in fw_mols.smi --act fw_act.csv --prefix test
