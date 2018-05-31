@@ -4,7 +4,7 @@
 free_wilson.py all --scaffold SCAFFOLD_MOLFILE --in INPUT_SMILES_FILE --prefix JOB_PREFIX --act ACTIVITY_FILE [--log]
 free_wilson.py rgroup --scaffold SCAFFOLD_MOLFILE --in INPUT_SMILES_FILE --prefix JOB_PREFIX
 free_wilson.py regression --desc DESCRIPTOR_FILE --act ACTIVITY_FILE --prefix JOB_PREFIX [--log]
-free_wilson.py enumeration --model MOLDEL_FILE --desc DESCRIPTOR_FILE --prefix JOB_PREFIX
+free_wilson.py enumeration --scaffold SCAFFOLD_MOLFILE --model MOLDEL_FILE --desc DESCRIPTOR_FILE --prefix JOB_PREFIX
 
 Options:
 --scaffold SCAFFOLD_MOLFILE molfile with labeled R-groups
