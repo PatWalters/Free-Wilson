@@ -19,7 +19,7 @@ pip install docopt tqdm pyfancy sklearn scipy
 ```
  
 ### Usage
-A detailed tutorial introduction can be found at https://practicalcheminfomatics.blogspot.com/2018/05/free-wilson-analysis.html
+A detailed tutorial introduction can be found at http://practicalcheminformatics.blogspot.com/2018/05/free-wilson-analysis.html
 
 As a demo, go to the data directory and run the command below 
 ```commandline
