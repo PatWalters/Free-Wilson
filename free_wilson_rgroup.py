@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import pandas as pd
 from pyfancy import pyfancy
+import re
 
 from rgroup_generator import build_rgroup_dataframe
 
@@ -70,6 +71,19 @@ def generate_vectors(df, r_dict_list):
     return vector_df
 
 
+def validate_dataframe(df):
+    rgroup_re = re.compile("\[\*:[0-9]+\]")
+    ok = []
+    for row in df.values:
+        name = row[1]
+        match_count = [len(rgroup_re.findall(rg)) for rg in row[2:]]
+        if max(match_count) > 1:
+            print("Error on %s - multiple connections %s - skipping" % (name, row[2:]))
+        else:
+            ok.append(row)
+    return pd.DataFrame(ok,columns=df.columns)
+
+
 def free_wilson_rgroup(core_file_name, input_smiles_file, prefix):
     """
     Driver function, generates a descriptor matrix from input
@@ -80,6 +94,7 @@ def free_wilson_rgroup(core_file_name, input_smiles_file, prefix):
     """
     pyfancy.pyfancy().red().bold().add("Generating R-groups").output()
     new_df = build_rgroup_dataframe(core_file_name, input_smiles_file)
+    new_df = validate_dataframe(new_df)
     rgroup_csv = prefix + "_rgroup.csv"
     new_df.to_csv(rgroup_csv, index=False)
     print("wrote R-groups to", rgroup_csv)
