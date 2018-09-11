@@ -58,6 +58,20 @@ class RGroupDecomposition:
         # Scaffold molfile
         self.rg_mol = Chem.MolFromMolFile(rg_molfile)
         self.initialize_rgroup_mol(self.rg_mol)
+        self.smarts_idx = -1
+        self.smarts_pat = None
+
+    def setup_smarts(self, input_string):
+        toks = input_string.split("|", 1)
+        if len(toks) == 2:
+            r_idx, smarts = toks
+            self.smarts_idx = int(r_idx)
+            smarts_mol = Chem.MolFromSmarts(smarts)
+            if smarts_mol:
+                self.smarts_pat = smarts_mol
+            else:
+                print("Could not parse SMARTS %s for R_%d" % (smarts, r_idx))
+                sys.exit(1)
 
     def initialize_rgroup_mol(self, rg_mol: Chem.Mol) -> None:
         """
@@ -125,17 +139,30 @@ class RGroupDecomposition:
         # the largest number of non-hydrogen R-groups first.
         augmented_list = [(count_hydrogens(x), x) for x in rgroup_smiles_lst]
         augmented_list.sort(key=itemgetter(0))
+
+        if self.smarts_idx > 0:
+            r_group_idx = self.smarts_idx
+            smarts = self.smarts_pat
+            for idx, row in augmented_list:
+                rgroup_smiles = row[r_group_idx-1]
+                rgroup_mol = Chem.MolFromSmiles(rgroup_smiles)
+                if rgroup_mol.HasSubstructMatch(smarts):
+                    return row
+
         return augmented_list[0][1]
 
 
-def build_rgroup_dataframe(scaffold_molfile: str, smiles_file: str) -> DataFrame:
+def build_rgroup_dataframe(scaffold_molfile: str, smiles_file: str, pat_smarts: str = None) -> DataFrame:
     """
     Read a scaffold molfile and SMILES file, decompose molecules in the SMILES file to R-groups
     @param scaffold_molfile: input scaffold as an RDKt molecule
     @param smiles_file: input SMILES file
+    @param pat_smarts: SMARTS pattern defining R-group restrictions
     @return: DataFrame with SMILES, Name, R-groups
     """
     rgroup_decomposition = RGroupDecomposition(scaffold_molfile)
+    if pat_smarts:
+        rgroup_decomposition.setup_smarts(pat_smarts)
     header = ["SMILES", "Name"] + ["R%d_SMILES" % x for x in rgroup_decomposition.rg_idx_lst]
     suppl = Chem.SmilesMolSupplier(smiles_file, titleLine=False)
     rgd_list = []

@@ -84,16 +84,17 @@ def validate_dataframe(df):
     return pd.DataFrame(ok,columns=df.columns)
 
 
-def free_wilson_rgroup(core_file_name, input_smiles_file, prefix):
+def free_wilson_rgroup(core_file_name, input_smiles_file, prefix, r_group_smarts):
     """
     Driver function, generates a descriptor matrix from input
     @param core_file_name: scaffold as a molfile with labeled R-groups
     @param input_smiles_file: input file as "SMILES Name"
     @param prefix: prefix to use for output files
+    @param r_group_smarts: SMARTS defining R-group restrictions
     @return: a dataframe containing descriptor vectors with presence/absence of particular R-groups
     """
     pyfancy.pyfancy().red().bold().add("Generating R-groups").output()
-    new_df = build_rgroup_dataframe(core_file_name, input_smiles_file)
+    new_df = build_rgroup_dataframe(core_file_name, input_smiles_file, r_group_smarts)
     new_df = validate_dataframe(new_df)
     rgroup_csv = prefix + "_rgroup.csv"
     new_df.to_csv(rgroup_csv, index=False)
