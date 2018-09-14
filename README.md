@@ -39,7 +39,7 @@ Options:
 --prefix JOB_PREFIX job prefix
 --act ACTIVITY_FILE activity column should be labeled "Act" in the header
 --model MODEL_FILE names of the model file created by the "regression" command
---smarts R_GROUP_SMARTS SMARTS pattern to restrict R-group when the scaffold is
+--smarts R_GROUP_SMARTS SMARTS pattern to restrict R-group when the scaffold is symmetric
 --max MAX_SPEC maximum number of R-groups to enumerate specified as a string for R1,R2,R3 e.g. "2,5,8"
 ```
 
