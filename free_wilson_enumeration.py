@@ -38,6 +38,7 @@ def get_rgroups(prefix: str, max_str: str = None):
     :return:
     """
     ascending_sort = True
+    max_list = None
     if max_str:
         toks = max_str.split("|")
         if len(toks) == 2 and toks[0] in ["a", "d"]:
