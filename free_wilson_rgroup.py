@@ -42,7 +42,7 @@ def collect_r_groups(df):
             r_dict_list.append(dict([(x[1], x[0]) for x in enumerate(unique_r)]))
 
     for idx, row in enumerate(r_list, 1):
-        print("R%02d: %d" % (idx, len(row)))
+        print(f"R{idx}: {len(row)}")
     return r_dict_list, r_list, descriptor_names
 
 

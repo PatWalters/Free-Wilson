@@ -29,6 +29,61 @@ def read_input(model_file_name: str, vector_file_name: str):
     return lm, df
 
 
+def get_rgroups(prefix: str, max_str: str = None):
+    """
+    Read the coefficients file and extract the R-groups
+    Optionally select only the top N R-group
+    :param prefix: prefix for the coefficients file, file name is prefix_coefficients.csv
+    :param max_list: string with list of maximum number of coefficents to consider e.g. "5,8,12"
+    :return:
+    """
+    ascending_sort = True
+    if max_str:
+        toks = max_str.split("|")
+        if len(toks) == 2 and toks[0] in ["a", "d"]:
+            direction, max_list = toks
+            ascending_sort = direction == "a"
+            print(f"Limiting prducts to {max_list}")
+            max_list = [int(x) for x in max_list.split(",")]
+        else:
+            print(f"ERROR: incorrect arguments for --max '{max_str}', should be [a,d]|x,y,z")
+            print(f"where a and d are ascending and descending and x,y,z are the maxium number of rgroups enumerated")
+            sys.exit(1)
+
+    coefficients_file_name = f"{prefix}_coefficients.csv"
+    try:
+        coefficient_df = pd.read_csv(coefficients_file_name)
+    except FileNotFoundError:
+        print(f"Could not open coefficients file {coefficients_file_name}", file=sys.stderr)
+        sys.exit(1)
+    index_list = sorted(coefficient_df["R-group"].unique())
+    if max_list and len(max_list) != len(index_list):
+        print(f"ERROR: length of list specified by --max argument is {len(max_list)} and should be {len(index_list)}")
+        sys.exit(1)
+    coefficient_df.sort_values(by="Coefficient", inplace=True, ascending=ascending_sort)
+    r_group_summary = []
+    for i in index_list:
+        r_group_list = coefficient_df[coefficient_df["R-group"] == i]
+        if max_list:
+            r_group_list = r_group_list.iloc[0:max_list[i - 1]]
+        r_group_summary.append(list(enumerate(r_group_list['R-Group SMILES'].values)))
+    print("Enumerating")
+    for r_idx, r in enumerate(r_group_summary, 1):
+        print(f"R{r_idx}: {len(r)}")
+
+    vector_file_name = f"{prefix}_vector.csv"
+    try:
+        vector_df = pd.read_csv(vector_file_name)
+        used = set()
+        for row in vector_df.values.tolist():
+            used.add(",".join([str(x) for x in row[1:]]))
+    except FileNotFoundError:
+        print(f"Could not open descriptor file {vector_file_name}", file=sys.stderr)
+        sys.exit(1)
+
+    return used, r_group_summary
+
+
 def parse_rgroups(df: pd.DataFrame) -> Tuple[set, list]:
     """
     read the descriptor dataframe and identify unique r-groups
@@ -67,7 +122,15 @@ def build_offset_list(r_group_summary: list) -> Tuple[int, list]:
     return num_r_groups, offset_list
 
 
-def make_dataframe(input_list: list, lm: linear_model, descriptor_list: list, num_rgroups: int)-> pd.DataFrame:
+def make_dataframe(input_list: list, lm: linear_model, descriptor_list: list, num_rgroups: int) -> pd.DataFrame:
+    """
+    Given a list of descriptors and linear model, return a dataframe with results
+    :param input_list: input list of R-groups
+    :param lm: linear model
+    :param descriptor_list: list of decriptors
+    :param num_rgroups: number of R-groups
+    :return: dataframe with R-groups and predictions
+    """
     df = pd.DataFrame(input_list)
     df.columns = ["SMILES"] + ["R%d_SMILES" % (i + 1) for i in range(0, num_rgroups)]
     df["Pred"] = lm.predict(descriptor_list)
@@ -120,21 +183,24 @@ def stream_output(used: set, lm: linear_model, core_smiles: str, r_group_summary
             write_header = False
 
     total_mols_enumerated += len(output_list)
-    df = make_dataframe(output_list, lm, descriptor_list, len(r_group_summary))
-    df.to_csv(ofs, header=write_header, index=False, float_format=float_format)
+
+    if len(output_list):
+        df = make_dataframe(output_list, lm, descriptor_list, len(r_group_summary))
+        df.to_csv(ofs, header=write_header, index=False, float_format=float_format)
     print(f"wrote {total_mols_enumerated} structures to {output_filename}")
 
 
 def free_wilson_enumeration(core_file_name: str, model_file_name: str,
-                            vector_file_name: str, prefix: str) -> None:
+                            prefix: str, max_list: str = None) -> None:
     """
     driver function - enumerate products from core + r-groups
     @param core_file_name: core molfile name
     @param model_file_name: file name with pickled model
-    @param vector_file_name: file with r-group descriptors
     @param prefix: prefix for output
+    @parm max_list: comma delimited string with the maximum numbers of R-groups to enumerate e.g. "5,2,3"
     @return: None
     """
+    vector_file_name = f"{prefix}_vector.csv"
     core_mol = Chem.MolFromMolFile(core_file_name)
     reflect_rgroups(core_mol)
     core_smiles = Chem.MolToSmiles(core_mol)
@@ -142,17 +208,24 @@ def free_wilson_enumeration(core_file_name: str, model_file_name: str,
     lm, df = read_input(model_file_name, vector_file_name)
     num_row, num_cols = df.shape
     vector_size = num_cols - 1
-    used, r_group_summary = parse_rgroups(df)
+    used, r_group_summary = get_rgroups(prefix, max_list)
     num_r_groups, offset_list = build_offset_list(r_group_summary)
     # handle the case where only 1 r-group is provided
     if num_r_groups > 1:
-        stream_output(used, lm, core_smiles, r_group_summary, offset_list, prefix, vector_size, 100)
+        stream_output(used, lm, core_smiles, r_group_summary, offset_list, prefix, vector_size, 1000)
     else:
         print("only 1 R-group, no additional products possible")
 
 
+def main():
+    used, r_group_list = get_rgroups("chembl", "5,5,5")
+    print(used)
+    print(r_group_list)
+
+
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print(f"usage: {sys.argv[0]} model_file vector_file prefix")
-        sys.exit(0)
-    free_wilson_enumeration(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    main()
+    # if len(sys.argv) != 4:
+    #     print(f"usage: {sys.argv[0]} model_file vector_file prefix")
+    #     sys.exit(0)
+    # free_wilson_enumeration(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
