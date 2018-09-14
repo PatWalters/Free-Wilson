@@ -138,17 +138,17 @@ def make_dataframe(input_list: list, lm: linear_model, descriptor_list: list, nu
     return df
 
 
-def stream_output(used: set, lm: linear_model, core_smiles: str, r_group_summary: list, offset_list: list,
-                  prefix: str, vector_size: int, chunk_size: int = 10000) -> None:
+def stream_output(used: set, lm: linear_model, core_smiles: str, r_group_summary: list,
+                  prefix: str, vector_size: int, bit_dict: dict, chunk_size: int = 10000) -> None:
     """
     stream the results to an output file, chunk_size at a time
     :param used: dictionary with descriptors molecules already synthesized
     :param lm: pickled model
     :param core_smiles: smiles for the core
     :param r_group_summary: r group summary from the previous step
-    :param offset_list: list of r-group offsets for descriptor generation
     :param prefix: prefix for output file, will be written as {prefix}_not_synthesized.csv
     :param vector_size: size of the descriptor vector
+    :param bit_dict: dictionary mapping r_groups to position in the bit vector
     :param chunk_size: chunk size for writing the output
     :return:
     """
@@ -163,8 +163,9 @@ def stream_output(used: set, lm: linear_model, core_smiles: str, r_group_summary
     total_mols_enumerated = 0
     for row_idx, row in tqdm(enumerate(product(*r_group_summary), 1), total=num_products):
         row_vec = np.zeros(vector_size, dtype=np.int)
-        for [idx, _], offset in zip(row, offset_list):
-            row_vec[idx + offset] = 1
+        for [_, rg] in row:
+            bit = bit_dict[rg]
+            row_vec[bit] = 1
         test_str = ",".join(map(str, row_vec))
         if test_str in used:
             continue
@@ -207,13 +208,14 @@ def free_wilson_enumeration(core_file_name: str, model_file_name: str,
     core_smiles = Chem.MolToSmiles(core_mol)
     pyfancy.pyfancy().red().bold().add("Enumerating new products").output()
     lm, df = read_input(model_file_name, vector_file_name)
+    bit_dict = dict([(x[1],x[0]) for x in enumerate(df.columns[1:])])
     num_row, num_cols = df.shape
     vector_size = num_cols - 1
     used, r_group_summary = get_rgroups(prefix, max_list)
     num_r_groups, offset_list = build_offset_list(r_group_summary)
     # handle the case where only 1 r-group is provided
     if num_r_groups > 1:
-        stream_output(used, lm, core_smiles, r_group_summary, offset_list, prefix, vector_size, 1000)
+        stream_output(used, lm, core_smiles, r_group_summary, prefix, vector_size, bit_dict, 1000)
     else:
         print("only 1 R-group, no additional products possible")
 
@@ -226,7 +228,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # if len(sys.argv) != 4:
-    #     print(f"usage: {sys.argv[0]} model_file vector_file prefix")
-    #     sys.exit(0)
-    # free_wilson_enumeration(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
