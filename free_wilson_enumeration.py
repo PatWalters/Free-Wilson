@@ -74,6 +74,11 @@ def build_used_set(vector_file_name: str) -> set:
 
 
 def build_max_list(max_str: str) -> (str, list):
+    """
+    build a list of the maximum number of allowed R-groups
+    :param max_str: string containing the max values as passed on the command line
+    :return: bool indicating sort direction, list with maximum number of allowed R-groups
+    """
     ascending_sort = True
     max_list = None
     if max_str:
