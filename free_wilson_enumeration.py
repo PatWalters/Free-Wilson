@@ -56,7 +56,7 @@ def build_r_group_summary(coefficients_file_name: str, max_list: list, ascending
     return r_group_summary
 
 
-def build_used_set(vector_file_name: str)->set:
+def build_used_set(vector_file_name: str) -> set:
     """
     Read the vector file and build a set of strings by concatenating each vector with a comma
     :param vector_file_name: name of the vector file
@@ -73,7 +73,7 @@ def build_used_set(vector_file_name: str)->set:
         sys.exit(1)
 
 
-def build_max_list(max_str: str)->(str,list):
+def build_max_list(max_str: str) -> (str, list):
     ascending_sort = True
     max_list = None
     if max_str:
@@ -101,7 +101,7 @@ def get_rgroups(prefix: str, max_str: str = None) -> (set, dict):
     ascending_sort, max_list = build_max_list(max_str)
 
     coefficients_file_name = f"{prefix}_coefficients.csv"
-    r_group_summary = build_r_group_summary(coefficients_file_name,max_list,ascending_sort)
+    r_group_summary = build_r_group_summary(coefficients_file_name, max_list, ascending_sort)
 
     vector_file_name = f"{prefix}_vector.csv"
     used = build_used_set(vector_file_name)
@@ -182,11 +182,11 @@ def free_wilson_enumeration(core_file_name: str, model_file_name: str,
                             prefix: str, max_list: str = None) -> None:
     """
     driver function - enumerate products from core + r-groups
-    @param core_file_name: core molfile name
-    @param model_file_name: file name with pickled model
-    @param prefix: prefix for output
-    @parm max_list: comma delimited string with the maximum numbers of R-groups to enumerate e.g. "5,2,3"
-    @return: None
+    :param core_file_name: core molfile name
+    :param model_file_name: file name with pickled model
+    :param prefix: prefix for output
+    :param max_list: comma delimited string with the maximum numbers of R-groups to enumerate e.g. "5,2,3"
+    :return: None
     """
     vector_file_name = f"{prefix}_vector.csv"
     core_mol = Chem.MolFromMolFile(core_file_name)

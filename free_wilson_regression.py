@@ -25,7 +25,7 @@ def read_and_combine_dataframes(descriptor_file_name, activity_file_name, log_sc
     act_df.dropna(inplace=True)
     if "Act" not in act_df.columns:
         error_msg = """Error:\nThe activity file %s does not have a column called "Act"\nPlease fix %s""" % (
-        activity_file_name, activity_file_name)
+            activity_file_name, activity_file_name)
         pyfancy.pyfancy().yellow().bold().add(error_msg).output()
         sys.exit(0)
     if log_scale:
