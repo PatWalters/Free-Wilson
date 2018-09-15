@@ -56,6 +56,23 @@ def build_r_group_summary(coefficients_file_name: str, max_list: list, ascending
     return r_group_summary
 
 
+def build_used_set(vector_file_name: str)->set:
+    """
+    Read the vector file and build a set of strings by concatenating each vector with a comma
+    :param vector_file_name: name of the vector file
+    :return: set of strings made of comma concatenated vectors
+    """
+    try:
+        vector_df = pd.read_csv(vector_file_name)
+        used = set()
+        for row in vector_df.values.tolist():
+            used.add(",".join([str(x) for x in row[1:]]))
+        return used
+    except FileNotFoundError:
+        print(f"Could not open descriptor file {vector_file_name}", file=sys.stderr)
+        sys.exit(1)
+
+
 def get_rgroups(prefix: str, max_str: str = None) -> (set, dict):
     """
     Read the coefficients file and extract the R-groups
@@ -82,14 +99,7 @@ def get_rgroups(prefix: str, max_str: str = None) -> (set, dict):
     r_group_summary = build_r_group_summary(coefficients_file_name,max_list,ascending_sort)
 
     vector_file_name = f"{prefix}_vector.csv"
-    try:
-        vector_df = pd.read_csv(vector_file_name)
-        used = set()
-        for row in vector_df.values.tolist():
-            used.add(",".join([str(x) for x in row[1:]]))
-    except FileNotFoundError:
-        print(f"Could not open descriptor file {vector_file_name}", file=sys.stderr)
-        sys.exit(1)
+    used = build_used_set(vector_file_name)
 
     return used, r_group_summary
 
