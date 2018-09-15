@@ -73,14 +73,7 @@ def build_used_set(vector_file_name: str)->set:
         sys.exit(1)
 
 
-def get_rgroups(prefix: str, max_str: str = None) -> (set, dict):
-    """
-    Read the coefficients file and extract the R-groups
-    Optionally select only the top N R-group
-    :param prefix: prefix for the coefficients file, file name is prefix_coefficients.csv
-    :param max_str: string with list of maximum number of coefficents to consider e.g. "5,8,12"
-    :return:
-    """
+def build_max_list(max_str: str)->(str,list):
     ascending_sort = True
     max_list = None
     if max_str:
@@ -94,6 +87,18 @@ def get_rgroups(prefix: str, max_str: str = None) -> (set, dict):
             print(f"ERROR: incorrect arguments for --max '{max_str}', should be [a,d]|x,y,z")
             print(f"where a and d are ascending and descending and x,y,z are the maxium number of rgroups enumerated")
             sys.exit(1)
+    return ascending_sort, max_list
+
+
+def get_rgroups(prefix: str, max_str: str = None) -> (set, dict):
+    """
+    Read the coefficients file and extract the R-groups
+    Optionally select only the top N R-group
+    :param prefix: prefix for the coefficients file, file name is prefix_coefficients.csv
+    :param max_str: string with list of maximum number of coefficents to consider e.g. "5,8,12"
+    :return:
+    """
+    ascending_sort, max_list = build_max_list(max_str)
 
     coefficients_file_name = f"{prefix}_coefficients.csv"
     r_group_summary = build_r_group_summary(coefficients_file_name,max_list,ascending_sort)
