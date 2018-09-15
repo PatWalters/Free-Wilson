@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 
 import sys
-import re
-from collections import OrderedDict
 from itertools import product
-from typing import Tuple
 
 import numpy as np
 import pandas as pd
 from pyfancy import pyfancy
 from rdkit import Chem
-from sklearn.externals import joblib
 from sklearn import linear_model
+from sklearn.externals import joblib
 from tqdm import tqdm
 
 from free_wilson_utils import reflect_rgroups, weld_r_groups
@@ -29,7 +26,37 @@ def read_input(model_file_name: str, vector_file_name: str):
     return lm, df
 
 
-def get_rgroups(prefix: str, max_str: str = None):
+def build_r_group_summary(coefficients_file_name: str, max_list: list, ascending_sort: bool) -> list:
+    """
+    Build a list of list containing R-groups, limit based on max_list
+    :param coefficients_file_name: Coefficients file output by free_wilson_regression.py
+    :param max_list: list with maxium number of R-groups to enumerate
+    :param ascending_sort: direction to sort the coefficients
+    :return: list of lists of R-groups
+    """
+    try:
+        coefficient_df = pd.read_csv(coefficients_file_name)
+    except FileNotFoundError:
+        print(f"Could not open coefficients file {coefficients_file_name}", file=sys.stderr)
+        sys.exit(1)
+    index_list = sorted(coefficient_df["R-group"].unique())
+    if max_list and len(max_list) != len(index_list):
+        print(f"ERROR: length of list specified by --max argument is {len(max_list)} and should be {len(index_list)}")
+        sys.exit(1)
+    coefficient_df.sort_values(by="Coefficient", inplace=True, ascending=ascending_sort)
+    r_group_summary = []
+    for i in index_list:
+        r_group_list = coefficient_df[coefficient_df["R-group"] == i]
+        if max_list:
+            r_group_list = r_group_list.iloc[0:max_list[i - 1]]
+        r_group_summary.append(list(enumerate(r_group_list['R-Group SMILES'].values)))
+    print("Enumerating")
+    for r_idx, r in enumerate(r_group_summary, 1):
+        print(f"R{r_idx}: {len(r)}")
+    return r_group_summary
+
+
+def get_rgroups(prefix: str, max_str: str = None) -> (set, dict):
     """
     Read the coefficients file and extract the R-groups
     Optionally select only the top N R-group
@@ -52,25 +79,7 @@ def get_rgroups(prefix: str, max_str: str = None):
             sys.exit(1)
 
     coefficients_file_name = f"{prefix}_coefficients.csv"
-    try:
-        coefficient_df = pd.read_csv(coefficients_file_name)
-    except FileNotFoundError:
-        print(f"Could not open coefficients file {coefficients_file_name}", file=sys.stderr)
-        sys.exit(1)
-    index_list = sorted(coefficient_df["R-group"].unique())
-    if max_list and len(max_list) != len(index_list):
-        print(f"ERROR: length of list specified by --max argument is {len(max_list)} and should be {len(index_list)}")
-        sys.exit(1)
-    coefficient_df.sort_values(by="Coefficient", inplace=True, ascending=ascending_sort)
-    r_group_summary = []
-    for i in index_list:
-        r_group_list = coefficient_df[coefficient_df["R-group"] == i]
-        if max_list:
-            r_group_list = r_group_list.iloc[0:max_list[i - 1]]
-        r_group_summary.append(list(enumerate(r_group_list['R-Group SMILES'].values)))
-    print("Enumerating")
-    for r_idx, r in enumerate(r_group_summary, 1):
-        print(f"R{r_idx}: {len(r)}")
+    r_group_summary = build_r_group_summary(coefficients_file_name,max_list,ascending_sort)
 
     vector_file_name = f"{prefix}_vector.csv"
     try:
