@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import os
 import sys
 from operator import itemgetter
 
@@ -56,7 +56,17 @@ class RGroupDecomposition:
         # list of R-group indices
         self.rg_idx_lst: list = []
         # Scaffold molfile
-        self.rg_mol = Chem.MolFromMolFile(rg_molfile)
+
+        if os.path.exists(rg_molfile):
+            self.rg_mol = Chem.MolFromMolFile(rg_molfile)
+        else:
+            self.rg_mol = Chem.MolFromSmiles(rg_molfile)
+            if self.rg_mol is not None:
+                self.rg_mol.SetProp("_Name", "core-from-SMILES")
+            else:
+                self.rg_mol = Chem.MolFromSmarts(rg_molfile)
+                self.rg_mol.SetProp("_Name", "core-from-SMARTS")
+
         self.initialize_rgroup_mol(self.rg_mol)
         self.smarts_idx = -1
         self.smarts_pat = None
@@ -170,7 +180,11 @@ def build_rgroup_dataframe(scaffold_molfile: str, smiles_file: str, pat_smarts: 
         input_smiles = Chem.MolToSmiles(mol, True)
         rgd_result = rgroup_decomposition.process_mol(mol)
         if rgd_result:
-            rgd_list.append([input_smiles, mol.GetProp("_Name")] + rgd_result)
+            if not mol.HasProp("_Name"):
+                name = Chem.MolToSmiles(mol)
+            else:
+                name = mol.GetProp("_Name")
+            rgd_list.append([input_smiles, name] + rgd_result)
     rg_df = DataFrame(rgd_list, columns=header)
     return rg_df
 
