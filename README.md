@@ -15,7 +15,7 @@ The code uses a lot type hints so you'll probably need at least Python 3.6.
 
 2. Install dependencies  
 ```commandline
-pip install docopt tqdm pyfancy sklearn scipy
+pip install docopt tqdm pyfancy sklearn scipy joblib
 ```
  
 ### Usage

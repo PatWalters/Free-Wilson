@@ -6,7 +6,7 @@ import re
 import numpy as np
 import pandas as pd
 from pyfancy import pyfancy
-from sklearn.externals import joblib
+import joblib
 from sklearn.linear_model import Ridge
 from sklearn.metrics import r2_score
 
