@@ -2,7 +2,7 @@
 
 I wrote this version of Free-Wilson in 2018.  Since then, many of the libraries I used have improved.
 Hopefully, my coding skills have also improved.  I'd recommend using the new version and not this one.
-Please check out the Free-Wilson notebook in my [Practical Cheminformatics Tutorials](https://github.com/PatWalters/practical_cheminformatics_tutorials) repo
+Please check out the Free-Wilson notebook in my [Practical Cheminformatics Tutorials](https://github.com/PatWalters/practical_cheminformatics_tutorials) repo.
 
 
 ### Free Wilson Analysis
