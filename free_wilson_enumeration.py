@@ -8,7 +8,7 @@ import pandas as pd
 from pyfancy import pyfancy
 from rdkit import Chem
 from sklearn import linear_model
-from sklearn.externals import joblib
+import joblib
 from tqdm import tqdm
 
 from free_wilson_utils import reflect_rgroups, weld_r_groups
